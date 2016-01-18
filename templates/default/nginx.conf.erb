@@ -4,11 +4,13 @@ server {
 
   server_name <%= @fqdn %>;
 
+  <% if @acme_challenge %>
   location /.well-known/acme-challenge {
     default_type text/plain;
     charset off;
-    alias <%= @letsencrypt_root %>/<%= @fqdn %>;
+    alias <%= @acme_challenge_directories[@fqdn] %>;
   }
+  <% end %>
 
   location / {
     return 301 https://<%= @fqdn %>$request_uri;
@@ -21,11 +23,13 @@ server {
 
   server_name www.<%= @fqdn %>;
 
+  <% if @acme_challenge %>
   location /.well-known/acme-challenge {
     default_type text/plain;
     charset off;
-    alias <%= @letsencrypt_root %>/www.<%= @fqdn %>;
+    alias <%= @acme_challenge_directories["www.#{@fqdn}"] %>;
   }
+  <% end %>
 
   location / {
     return 301 https://<%= @fqdn %>$request_uri;
@@ -38,11 +42,13 @@ server {
 
   server_name 2015.<%= @fqdn %>;
 
+  <% if @acme_challenge %>
   location /.well-known/acme-challenge {
     default_type text/plain;
     charset off;
-    alias <%= @letsencrypt_root %>/2015.<%= @fqdn %>;
+    alias <%= @acme_challenge_directories["2015.#{@fqdn}"] %>;
   }
+  <% end %>
 
   location / {
     return 444;
@@ -73,7 +79,7 @@ server {
   ssl_ct_static_scts <%= @scts_dir %>;
   <% end %>
 
-  <% if @hpkp %>
+  <% if @hpkp && @hpkp_pins.size > 0 %>
   add_header Public-Key-Pins '<%= @hpkp_pins.map{ |pin| "pin-sha256=\"#{pin}\"" }.join '; ' %>; max-age=<%= @hpkp_max_age %>;' always;
   <% end %>
 
@@ -108,7 +114,7 @@ server {
   ssl_ct_static_scts <%= @scts_dir %>;
   <% end %>
 
-  <% if @hpkp %>
+  <% if @hpkp && @hpkp_pins.size > 0 %>
   add_header Public-Key-Pins '<%= @hpkp_pins.map{ |pin| "pin-sha256=\"#{pin}\"" }.join '; ' %>; max-age=<%= @hpkp_max_age %>;' always;
   <% end %>
 
