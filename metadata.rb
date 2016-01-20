@@ -1,8 +1,10 @@
 name 'volgactf-ru'
 description 'Installs and configures volgactf.ru'
-version '1.2.1'
+version '1.2.2'
 
 recipe 'volgactf-ru', 'Installs and configures volgactf.ru'
 depends 'latest-git', '~> 1.1.3'
 depends 'latest-nodejs', '~> 1.1.2'
-depends 'modern_nginx', '~> 1.2.0'
+depends 'modern_nginx', '~> 1.2.2'
+depends 'ssh_known_hosts', '~> 2.0.0'
+depends 'ssh_user', '~> 0.1.1'

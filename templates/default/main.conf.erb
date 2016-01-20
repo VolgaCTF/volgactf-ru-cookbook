@@ -37,25 +37,6 @@ server {
 }
 
 server {
-  listen [::]:80;
-  listen 80;
-
-  server_name 2015.<%= @fqdn %>;
-
-  <% if @acme_challenge %>
-  location /.well-known/acme-challenge {
-    default_type text/plain;
-    charset off;
-    alias <%= @acme_challenge_directories["2015.#{@fqdn}"] %>;
-  }
-  <% end %>
-
-  location / {
-    return 444;
-  }
-}
-
-server {
   listen [::]:443 ssl http2;
   listen 443 ssl http2;
 
