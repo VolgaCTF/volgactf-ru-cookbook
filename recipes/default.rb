@@ -1,3 +1,4 @@
+include_recipe 'resolver::default'
 include_recipe 'latest-git::default'
 include_recipe 'latest-nodejs::default'
 include_recipe 'modern_nginx::default'

@@ -5,7 +5,7 @@ default[id][:group] = 'vagrant'
 
 default[id][:main][:fqdn] = 'volgactf.dev'
 default[id][:main][:repository] = 'https://github.com/VolgaCTF/volgactf.ru'
-default[id][:main][:revision] = 'master'
+default[id][:main][:revision] = 'development'
 
 default[id][:arch_2015][:fqdn] = '2015.volgactf.dev'
 default[id][:arch_2015][:repository] = 'https://github.com/VolgaCTF/2015.volgactf.ru'

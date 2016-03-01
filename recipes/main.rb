@@ -11,13 +11,12 @@ directory base_dir do
   action :create
 end
 
-git base_dir do
-  repository node[id][:main][:repository]
-  revision node[id][:main][:revision]
-  enable_checkout false
+git2 base_dir do
+  url node[id][:main][:repository]
+  branch node[id][:main][:revision]
   user node[id][:user]
   group node[id][:group]
-  action :sync
+  action :create
 end
 
 if node.chef_environment.start_with? 'development'
@@ -58,13 +57,13 @@ execute 'Install Bower packages' do
 end
 
 execute 'Build assets' do
-  command 'npm run grunt'
+  command 'npm run gulp'
   cwd base_dir
   user node[id][:user]
   group node[id][:group]
   environment(
     'HOME' => "/home/#{node[id][:user]}",
-    'GRUNT_ENV' => node.chef_environment
+    'NODE_ENV' => node.chef_environment
   )
 end
 
