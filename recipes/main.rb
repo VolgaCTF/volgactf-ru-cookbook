@@ -1,5 +1,23 @@
 id = 'volgactf-ru'
 
+node.default['rbenv'][:group_users] = [
+  node[id][:user]
+]
+
+include_recipe 'rbenv::default'
+include_recipe 'rbenv::ruby_build'
+
+ENV['CONFIGURE_OPTS'] = '--disable-install-rdoc'
+
+rbenv_ruby node[id][:ruby_version] do
+  ruby_version node[id][:ruby_version]
+  global true
+end
+
+rbenv_gem 'bundler' do
+  ruby_version node[id][:ruby_version]
+end
+
 fqdn = node[id][:main][:fqdn]
 base_dir = ::File.join '/var/www', fqdn
 
@@ -41,30 +59,21 @@ directory logs_dir do
   action :create
 end
 
-nodejs_npm '.' do
-  path base_dir
-  json true
+rbenv_execute "Install bundle at #{base_dir}" do
+  command 'bundle'
+  ruby_version node[id][:ruby_version]
+  cwd base_dir
   user node[id][:user]
   group node[id][:group]
 end
 
-execute 'Install Bower packages' do
-  command 'npm run bower -- install'
+rbenv_execute 'Build website' do
+  command 'jekyll build'
+  ruby_version node[id][:ruby_version]
   cwd base_dir
   user node[id][:user]
   group node[id][:group]
-  environment 'HOME' => "/home/#{node[id][:user]}"
-end
-
-execute 'Build assets' do
-  command 'npm run gulp'
-  cwd base_dir
-  user node[id][:user]
-  group node[id][:group]
-  environment(
-    'HOME' => "/home/#{node[id][:user]}",
-    'NODE_ENV' => node.chef_environment
-  )
+  environment 'JEKYLL_ENV' => node.chef_environment
 end
 
 nginx_conf = ::File.join node[:nginx][:dir], 'sites-available', "#{fqdn}.conf"
@@ -86,7 +95,7 @@ template nginx_conf do
     hsts_max_age: node[id][:hsts_max_age],
     access_log: ::File.join(logs_dir, 'nginx_access.log'),
     error_log: ::File.join(logs_dir, 'nginx_error.log'),
-    doc_root: ::File.join(base_dir, 'dist'),
+    doc_root: ::File.join(base_dir, '_site'),
     oscp_stapling: node.chef_environment.start_with?('production'),
     scts: node.chef_environment.start_with?('production'),
     scts_dir: get_scts_directory(fqdn),

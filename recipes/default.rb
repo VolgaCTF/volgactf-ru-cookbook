@@ -7,7 +7,7 @@ include_recipe 'modern_nginx::cert'
 id = 'volgactf-ru'
 
 if node.chef_environment.start_with? 'development'
-  node.default[id][:main][:repository] = 'git@github.com:VolgaCTF/volgactf.ru.git'
+  node.default[id][:main][:repository] = 'git@github.com:VolgaCTF/volgactf.ru-jekyll.git'
   node.default[id][:arch_2015][:repository] = 'git@github.com:VolgaCTF/2015.volgactf.ru.git'
 
   ssh_known_hosts_entry 'github.com'
