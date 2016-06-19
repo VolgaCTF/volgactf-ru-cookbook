@@ -1,22 +1,22 @@
 id = 'volgactf-ru'
 
-fqdn = node[id][:arch_2015][:fqdn]
+fqdn = node[id]['arch_2015']['fqdn']
 base_dir = ::File.join '/var/www', fqdn
 
 directory base_dir do
-  owner node[id][:user]
-  group node[id][:group]
+  owner node[id]['user']
+  group node[id]['group']
   mode 0755
   recursive true
   action :create
 end
 
 git base_dir do
-  repository node[id][:arch_2015][:repository]
-  revision node[id][:arch_2015][:revision]
+  repository node[id]['arch_2015']['repository']
+  revision node[id]['arch_2015']['revision']
   enable_checkout false
-  user node[id][:user]
-  group node[id][:group]
+  user node[id]['user']
+  group node[id]['group']
   action :sync
 end
 
@@ -26,7 +26,7 @@ if node.chef_environment.start_with? 'development'
       value value
       scope 'local'
       path base_dir
-      user node[id][:user]
+      user node[id]['user']
       action :set
     end
   end
@@ -35,8 +35,8 @@ end
 logs_dir = ::File.join base_dir, 'logs'
 
 directory logs_dir do
-  owner node[id][:user]
-  group node[id][:group]
+  owner node[id]['user']
+  group node[id]['group']
   mode 0755
   recursive true
   action :create
@@ -45,27 +45,27 @@ end
 nodejs_npm '.' do
   path base_dir
   json true
-  user node[id][:user]
-  group node[id][:group]
+  user node[id]['user']
+  group node[id]['group']
 end
 
 execute 'Install Bower packages' do
   command 'npm run bower -- install'
   cwd base_dir
-  user node[id][:user]
-  group node[id][:group]
-  environment 'HOME' => "/home/#{node[id][:user]}"
+  user node[id]['user']
+  group node[id]['group']
+  environment 'HOME' => "/home/#{node[id]['user']}"
 end
 
 execute 'Build assets' do
   command 'npm run grunt'
   cwd base_dir
-  user node[id][:user]
-  group node[id][:group]
-  environment 'HOME' => "/home/#{node[id][:user]}"
+  user node[id]['user']
+  group node[id]['group']
+  environment 'HOME' => "/home/#{node[id]['user']}"
 end
 
-nginx_conf = ::File.join node[:nginx][:dir], 'sites-available', "#{fqdn}.conf"
+nginx_conf = ::File.join node['nginx']['dir'], 'sites-available', "#{fqdn}.conf"
 
 template nginx_conf do
   Chef::Resource::Template.send(:include, ::ModernNginx::Helper)
@@ -74,13 +74,9 @@ template nginx_conf do
   notifies :reload, 'service[nginx]', :delayed
   variables(
     fqdn: fqdn,
-    acme_challenge: node.chef_environment.start_with?('production'),
-    acme_challenge_directories: {
-      "#{fqdn}" => get_acme_challenge_directory(fqdn)
-    },
     ssl_certificate: get_ssl_certificate_path(fqdn),
     ssl_certificate_key: get_ssl_certificate_private_key_path(fqdn),
-    hsts_max_age: node[id][:hsts_max_age],
+    hsts_max_age: node[id]['hsts_max_age'],
     access_log: ::File.join(logs_dir, 'nginx_access.log'),
     error_log: ::File.join(logs_dir, 'nginx_error.log'),
     doc_root: ::File.join(base_dir, 'dist'),
@@ -89,7 +85,7 @@ template nginx_conf do
     scts_dir: get_scts_directory(fqdn),
     hpkp: node.chef_environment.start_with?('production'),
     hpkp_pins: get_hpkp_pins(fqdn),
-    hpkp_max_age: node[id][:hpkp_max_age]
+    hpkp_max_age: node[id]['hpkp_max_age']
   )
   action :create
 end
