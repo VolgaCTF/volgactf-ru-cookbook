@@ -21,8 +21,11 @@ server {
   access_log <%= @access_log %>;
   error_log <%= @error_log %>;
 
-  add_header Strict-Transport-Security "max-age=<%= @hsts_max_age %>" always;
-  add_header X-Frame-Options "DENY";
+  more_set_headers 'Strict-Transport-Security: max-age=<%= @hsts_max_age %>';
+  more_set_headers 'X-Frame-Options: DENY';
+
+  more_set_headers 'Cache-Control: must-revalidate';
+  etag on;
 
   <% if @oscp_stapling %>
   ssl_stapling on;
@@ -37,7 +40,7 @@ server {
   <% end %>
 
   <% if @hpkp && @hpkp_pins.size > 0 %>
-  add_header Public-Key-Pins '<%= @hpkp_pins.map{ |pin| "pin-sha256=\"#{pin}\"" }.join '; ' %>; max-age=<%= @hpkp_max_age %>;' always;
+  more_set_headers 'Public-Key-Pins: <%= @hpkp_pins.map{ |pin| "pin-sha256=\"#{pin}\"" }.join '; ' %>; max-age=<%= @hpkp_max_age %>;';
   <% end %>
 
   keepalive_timeout 300;
