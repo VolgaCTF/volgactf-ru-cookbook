@@ -44,28 +44,47 @@ execute "Build assets at #{base_dir}" do
   )
 end
 
-tls_certificate fqdn do
+tls_rsa_certificate fqdn do
   action :deploy
 end
 
-tls_item = ::ChefCookbook::TLS.new(node).certificate_entry(fqdn)
+tls_rsa_item = ::ChefCookbook::TLS.new(node).rsa_certificate_entry(fqdn)
+
+ngx_vhost_variables = {
+  fqdn: fqdn,
+  ssl_rsa_certificate: tls_rsa_item.certificate_path,
+  ssl_rsa_certificate_key: tls_rsa_item.certificate_private_key_path,
+  hsts_max_age: node[id]['hsts_max_age'],
+  access_log: ::File.join(node['nginx']['log_dir'], "#{fqdn}_access.log"),
+  error_log: ::File.join(node['nginx']['log_dir'], "#{fqdn}_error.log"),
+  doc_root: ::File.join(base_dir, 'build'),
+  oscp_stapling: !is_development,
+  scts: !is_development,
+  scts_rsa_dir: tls_rsa_item.scts_dir,
+  hpkp: !is_development,
+  hpkp_pins: tls_rsa_item.hpkp_pins,
+  hpkp_max_age: node[id]['hpkp_max_age'],
+  ec_certificates: false
+}
+
+if node[id]['ec_certificates']
+  tls_ec_certificate fqdn do
+    action :deploy
+  end
+
+  tls_ec_item = ::ChefCookbook::TLS.new(node).ec_certificate_entry(fqdn)
+
+  ngx_vhost_variables.merge!({
+    ec_certificates: true,
+    ssl_ec_certificate: tls_ec_item.certificate_path,
+    ssl_ec_certificate_key: tls_ec_item.certificate_private_key_path,
+    scts_ec_dir: tls_ec_item.scts_dir,
+    hpkp_pins: (ngx_vhost_variables[:hpkp_pins] + tls_ec_item.hpkp_pins).uniq
+  })
+end
 
 nginx_site fqdn do
   template 'nginx.conf.erb'
-  variables(
-    fqdn: fqdn,
-    ssl_certificate: tls_item.certificate_path,
-    ssl_certificate_key: tls_item.certificate_private_key_path,
-    hsts_max_age: node[id]['hsts_max_age'],
-    access_log: ::File.join(node['nginx']['log_dir'], "#{fqdn}_access.log"),
-    error_log: ::File.join(node['nginx']['log_dir'], "#{fqdn}_error.log"),
-    doc_root: ::File.join(base_dir, 'build'),
-    oscp_stapling: !is_development,
-    scts: !is_development,
-    scts_dir: tls_item.scts_dir,
-    hpkp: !is_development,
-    hpkp_pins: tls_item.hpkp_pins,
-    hpkp_max_age: node[id]['hpkp_max_age']
-  )
+  variables ngx_vhost_variables
   action :enable
 end

@@ -1,6 +1,6 @@
 name 'volgactf-ru'
 description 'Installs and configures volgactf.ru'
-version '1.4.0'
+version '1.5.0'
 
 recipe 'volgactf-ru', 'Installs and configures volgactf.ru'
 depends 'nodejs', '~> 4.0.0'
