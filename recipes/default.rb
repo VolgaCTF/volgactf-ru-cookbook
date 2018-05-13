@@ -1,14 +1,14 @@
 id = 'volgactf-ru'
 
-h = ::ChefCookbook::Instance::Helper.new(node)
+instance = ::ChefCookbook::Instance::Helper.new(node)
 
 fqdn = node[id]['fqdn']
 base_dir = ::File.join('/var/www', fqdn)
 is_development = node.chef_environment.start_with?('development')
 
 directory base_dir do
-  owner h.instance_user
-  group h.instance_group
+  owner instance.user
+  group instance.group
   mode 0755
   recursive true
   action :create
@@ -20,8 +20,8 @@ git base_dir do
   repository repository_url
   revision node[id]['revision']
   enable_checkout false
-  user h.instance_user
-  group h.instance_group
+  user instance.user
+  group instance.group
   action :sync
 end
 
@@ -29,17 +29,17 @@ nodejs_npm "Install npm packages at #{base_dir}" do
   package '.'
   path base_dir
   json true
-  user h.instance_user
-  group h.instance_group
+  user instance.user
+  group instance.group
 end
 
 execute "Build assets at #{base_dir}" do
   command 'npm run build'
   cwd base_dir
-  user h.instance_user
-  group h.instance_group
+  user instance.user
+  group instance.group
   environment(
-    'HOME' => h.instance_user_home,
+    'HOME' => instance.user_home,
     'NODE_ENV' => node.chef_environment
   )
 end
