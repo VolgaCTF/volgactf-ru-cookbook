@@ -49,6 +49,17 @@ tls_rsa_certificate fqdn do
 end
 
 tls_rsa_item = ::ChefCookbook::TLS.new(node).rsa_certificate_entry(fqdn)
+tls_ec_item = nil
+
+if node[id]['ec_certificates']
+  tls_ec_certificate fqdn do
+    action :deploy
+  end
+
+  tls_ec_item = ::ChefCookbook::TLS.new(node).ec_certificate_entry(fqdn)
+end
+
+has_scts = tls_rsa_item.has_scts? && (tls_ec_item.nil? ? true : tls_ec_item.has_scts?)
 
 ngx_vhost_variables = {
   fqdn: fqdn,
@@ -59,7 +70,7 @@ ngx_vhost_variables = {
   error_log: ::File.join(node['nginx']['log_dir'], "#{fqdn}_error.log"),
   doc_root: ::File.join(base_dir, 'build'),
   oscp_stapling: !is_development,
-  scts: !is_development,
+  scts: has_scts,
   scts_rsa_dir: tls_rsa_item.scts_dir,
   hpkp: !is_development,
   hpkp_pins: tls_rsa_item.hpkp_pins,
@@ -68,12 +79,6 @@ ngx_vhost_variables = {
 }
 
 if node[id]['ec_certificates']
-  tls_ec_certificate fqdn do
-    action :deploy
-  end
-
-  tls_ec_item = ::ChefCookbook::TLS.new(node).ec_certificate_entry(fqdn)
-
   ngx_vhost_variables.merge!({
     ec_certificates: true,
     ssl_ec_certificate: tls_ec_item.certificate_path,
