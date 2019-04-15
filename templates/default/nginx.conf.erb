@@ -15,12 +15,9 @@ server {
 
   server_name <%= @fqdn %>;
 
-  ssl_certificate <%= @ssl_rsa_certificate %>;
-  ssl_certificate_key <%= @ssl_rsa_certificate_key %>;
-
-  <% if @ec_certificates %>
-  ssl_certificate <%= @ssl_ec_certificate %>;
-  ssl_certificate_key <%= @ssl_ec_certificate_key %>;
+  <% @certificate_entries.each do |item| %>
+  ssl_certificate <%= item.certificate_path %>; # CRC32: <%= item.certificate_checksum %>
+  ssl_certificate_key <%= item.certificate_private_key_path %>; # CRC32: <%= item.certificate_private_key_checksum %>
   <% end %>
 
   access_log <%= @access_log %>;
@@ -35,8 +32,8 @@ server {
   <% if @oscp_stapling %>
   ssl_stapling on;
   ssl_stapling_verify on;
-  resolver 8.8.8.8 1.1.1.1 8.8.4.4 1.0.0.1 valid=600s;
-  resolver_timeout 10s;
+  resolver <%= @resolvers.join(' ') %> valid=<%= @resolver_valid %>s;
+  resolver_timeout <%= @resolver_timeout %>s;
   <% end %>
 
   charset utf-8;
